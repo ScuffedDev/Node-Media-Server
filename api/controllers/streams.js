@@ -1,5 +1,8 @@
 const _ = require('lodash');
 
+let last_bitrate = {};
+
+
 function getStreams(req, res, next) {
   let stats = {};
 
@@ -80,7 +83,6 @@ function getStreams(req, res, next) {
       }
     }
   });
-
   res.json(stats);
 }
 
@@ -102,8 +104,28 @@ function getStream(req, res, next) {
   streamStats.viewers = _.filter(Array.from(this.sessions.values()), (session) => {
     return session.playStreamPath === publishStreamPath;
   }).length;
+
   streamStats.duration = streamStats.isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0;
-  streamStats.bitrate = streamStats.duration > 0 ? Math.ceil(_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8 / streamStats.duration / 1024) : 0;
+
+
+  // streamStats.bitrate = streamStats.duration > 0 ? Math.ceil(_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8 / streamStats.duration / 1024) : 0;
+  // console.log(_.get(publisherSession, ['socket', 'bytesRead'], 0))
+
+  if (last_bitrate[req.params.stream]) {
+    streamStats.bitrate = (((_.get(publisherSession, ['socket', 'bytesRead'], 0) - last_bitrate[req.params.stream].bytesRead)/((new Date() - last_bitrate[req.params.stream].time) / 1000)*8)/1000)
+    // console.log((new Date() - last_bitrate[req.params.stream].time) / 1000)
+    last_bitrate[req.params.stream] = {
+      time:new Date(),
+      bytesRead: _.get(publisherSession, ['socket', 'bytesRead'], 0)
+    }
+  } else {
+    last_bitrate[req.params.stream] = {
+      time:new Date(),
+      bytesRead: _.get(publisherSession, ['socket', 'bytesRead'], 0)
+    }
+    streamStats.bitrate = last_bitrate[req.params.stream].bytesRead;
+  }
+
   streamStats.startTime = streamStats.isLive ? publisherSession.connectTime : null;
 
   res.json(streamStats);
@@ -119,7 +141,9 @@ function delStream(req, res, next) {
     publisherSession.stop();
     res.json("ok");
   } else {
-    res.json({ error: "stream not found" }, 404);
+    res.json({
+      error: "stream not found"
+    }, 404);
   }
 }
 
