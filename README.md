@@ -1,4 +1,8 @@
 # Node-Media-Server
+Node-Media-Server with a temporary more accurate per stream bitrate fix.
+
+To install: `yarn add https://github.com/ScuffedDev/Node-Media-Server`
+
 [![npm](https://img.shields.io/node/v/node-media-server.svg)](https://nodejs.org/en/)
 [![npm](https://img.shields.io/npm/v/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
